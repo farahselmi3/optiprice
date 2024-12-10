@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiPrice Assistant</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gradient-start: #4f46e5;
+            --gradient-end: #3b82f6;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --accent: #3b82f6;
+            --success: #22c55e;
+            --error: #ef4444;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--text-primary);
+        }
+
+        .chat-wrapper {
+            max-width: 1200px;
+            margin: 2rem auto;
+            width: 95%;
+            display: flex;
+            gap: 2rem;
+            padding: 0 1rem;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--surface);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .chatbot-container {
+            flex: 1;
+            background: var(--surface);
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            max-height: 85vh;
+        }
+
+        .header {
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: white;
+        }
+
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .header-info {
+            flex: 1;
+        }
+
+        .header-title {
+            font-weight: 600;
+            font-size: 1.125rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .header-status {
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+        }
+
+        .chat-display {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            background: var(--background);
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            max-width: 80%;
+            margin-bottom: 1rem;
+            animation: slideIn 0.3s ease-out;
+            position: relative;
+        }
+
+        .message.user {
+            margin-left: auto;
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+            color: white;
+            padding: 1rem 1.25rem;
+            border-radius: 1rem 1rem 0.25rem 1rem;
+        }
+
+        .message.bot {
+            margin-right: auto;
+            background: var(--surface);
+            color: var(--text-primary);
+            padding: 1rem 1.25rem;
+            border-radius: 1rem 1rem 1rem 0.25rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .input-container {
+            padding: 1.25rem;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 0.75rem;
+            background: var(--background);
+            padding: 0.5rem;
+            border-radius: 1rem;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .input-wrapper input {
+            flex: 1;
+            border: none;
+            background: none;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+
+        .input-wrapper input:focus {
+            outline: none;
+        }
+
+        .input-wrapper button {
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .input-wrapper button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 1rem;
+            background: var(--surface);
+            border-radius: 1rem;
+            margin-bottom: 1rem;
+            width: fit-content;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .typing-indicator span {
+            width: 6px;
+            height: 6px;
+            background: var(--text-secondary);
+            display: inline-block;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-8px); }
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .back-link {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            background: var(--surface);
+            color: var(--text-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (min-width: 1024px) {
+            .sidebar {
+                display: block;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .chat-wrapper {
+                margin: 0;
+                width: 100%;
+                padding: 0;
+            }
+
+            .chatbot-container {
+                border-radius: 0;
+                height: 100vh;
+                max-height: 100vh;
+            }
+
+            .back-link {
+                bottom: 1rem;
+                left: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-wrapper">
+        <div class="chatbot-container">
+            <div class="header">
+                <div class="header-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="header-info">
+                    <div class="header-title">OptiPrice Assistant</div>
+                    <div class="header-status">
+                        <span class="status-dot"></span> Online
+                    </div>
+                </div>
+            </div>
+            <div class="chat-display" id="chatBox">
+                <div class="message bot">Bienvenue! Chargez un fichier CSV et posez des questions sur nos produits.</div>
+            </div>
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <input type="text" id="userInput" placeholder="Posez une question...">
+                    <button onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i> Envoyer
+                    </button>
+                </div>
+            </div>
+            <div class="upload-section" style="padding: 1rem; text-align: center;">
+                <label for="csvFile">Charger fichier CSV : </label>
+                <input type="file" id="csvFile" accept=".csv">
+                <button onclick="loadCSV()">Charger</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        let produits = [];
+
+        // Fonction pour charger le fichier CSV
+        function loadCSV() {
+            const fileInput = document.getElementById("csvFile");
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Veuillez sélectionner un fichier CSV.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const content = e.target.result;
+                produits = parseCSV(content);
+                alert("Fichier CSV chargé avec succès!");
+            };
+
+            reader.readAsText(file);
+        }
+
+        // Fonction pour parser le contenu CSV
+        function parseCSV(content) {
+            const rows = content.split("\n").map(row => row.split(","));
+            const headers = rows[0];
+            return rows.slice(1).map(row => {
+                const produit = {};
+                row.forEach((value, index) => {
+                    produit[headers[index].trim()] = value.trim();
+                });
+                return produit;
+            });
+        }
+
+        // Fonction pour ajouter un message au chat
+        function addMessage(message, isUser = true) {
+            const chatBox = document.getElementById("chatBox");
+            const chat = document.createElement("div");
+            chat.className = `message ${isUser ? "user" : "bot"}`;
+            chat.innerText = message;
+            chatBox.appendChild(chat);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Fonction pour traiter les questions de l'utilisateur
+        function handleQuestion(question) {
+            question = question.toLowerCase();
+            let response = "Je ne comprends pas votre question. Veuillez demander le prix, la catégorie ou un produit spécifique.";
+
+            if (question.includes("prix") || question.includes("combien")) {
+                const produit = produits.find(p => question.includes(p.Produit.toLowerCase()));
+                if (produit) {
+                    response = `Le prix de ${produit.Produit} est ${produit.Prix} TND.`;
+                } else {
+                    response = "Désolé, je ne trouve pas le produit mentionné.";
+                }
+            } else if (question.includes("categorie") || question.includes("type")) {
+                const produit = produits.find(p => question.includes(p.Produit.toLowerCase()));
+                if (produit) {
+                    response = `${produit.Produit} appartient à la catégorie ${produit.Categorie}.`;
+                } else {
+                    response = "Désolé, je ne trouve pas le produit mentionné.";
+                }
+            } else {
+                const produit = produits.find(p => question.includes(p.Produit.toLowerCase()));
+                if (produit) {
+                    response = `${produit.Produit}: Catégorie - ${produit.Categorie}, Prix - ${produit.Prix} TND.`;
+                }
+            }
+
+            return response;
+        }
+
+        // Fonction pour envoyer un message
+        function sendMessage() {
+            const userInput = document.getElementById("userInput").value;
+            if (!userInput.trim()) return;
+
+            addMessage(userInput);
+            const botResponse = handleQuestion(userInput);
+            setTimeout(() => addMessage(botResponse, false), 500);
+
+            document.getElementById("userInput").value = "";
+        }
+    </script>
+</body>
+</html>
